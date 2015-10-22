@@ -10,15 +10,16 @@ BUILD_BASE	= build
 FW_BASE		= firmware
 
 # Base directory for the compiler
-XTENSA_TOOLS_ROOT ?= c:/Espressif/xtensa-lx106-elf/bin
+#export PATH=/home/viciu/Documents/dev/esp-open-sdk/xtensa-lx106-elf/bin:$PATH
+XTENSA_TOOLS_ROOT ?= /home/viciu/Documents/dev/esp-open-sdk/xtensa-lx106-elf/bin
 
 # base directory of the ESP8266 SDK package, absolute
-SDK_BASE	?= c:/Espressif/ESP8266_SDK
+SDK_BASE	?= /home/viciu/Documents/dev/esp-open-sdk/sdk
 
 # esptool path and port
-SDK_TOOLS	?= c:/Espressif/utils
-ESPTOOL		?= $(SDK_TOOLS)/esptool.exe
-ESPPORT		?= COM11
+SDK_TOOLS	?= $(SDK_BASE)/tools
+ESPTOOL		?= esptool.py
+ESPPORT		?= /dev/ttyUSB0
 
 # BOOT = none
 # BOOT = old - boot_v1.1
@@ -133,7 +134,7 @@ TARGET		= app
 
 # which modules (subdirectories) of the project to include in compiling
 MODULES		= driver math user
-EXTRA_INCDIR    = include include\driver include\math $(SDK_BASE)/../include
+EXTRA_INCDIR    = include include/driver include/math $(SDK_BASE)/../include
 
 # libraries used in this project, mainly provided by the SDK
 LIBS		= c gcc hal phy pp net80211 lwip wpa main
@@ -225,9 +226,9 @@ $(TARGET_OUT): $(APP_AR)
 	$(Q) $(OBJCOPY) --only-section .rodata -O binary $@ eagle.app.v6.rodata.bin
 	$(Q) $(OBJCOPY) --only-section .irom0.text -O binary $@ eagle.app.v6.irom0text.bin
 	$(vecho) "objcopy done"
-	$(vecho) "Run gen_appbin.exe"
+	$(vecho) "Run gen_appbin.py"
 ifeq ($(app), 0)
-	$(Q) $(SDK_TOOLS)/gen_appbin.exe $@ 0 $(mode) $(freqdiv) $(size)
+	$(Q) $(SDK_TOOLS)/gen_appbin.py $@ 0 $(mode) $(freqdiv) $(size)
 	$(Q) mv eagle.app.flash.bin firmware/eagle.flash.bin
 	$(Q) mv eagle.app.v6.irom0text.bin firmware/eagle.irom0text.bin
 	$(Q) rm eagle.app.v6.*
@@ -237,10 +238,10 @@ ifeq ($(app), 0)
 	$(vecho) "eagle.irom0text.bin---->0x40000"
 else
     ifeq ($(boot), new)
-		$(Q) $(SDK_TOOLS)/gen_appbin.exe $@ 2 $(mode) $(freqdiv) $(size)
+		$(Q) $(SDK_TOOLS)/gen_appbin.py $@ 2 $(mode) $(freqdiv) $(size)
 		$(vecho) "Support boot_v1.2 and +"
     else
-		$(Q) $(SDK_TOOLS)/gen_appbin.exe $@ 1 $(mode) $(freqdiv) $(size)
+		$(Q) $(SDK_TOOLS)/gen_appbin.py $@ 1 $(mode) $(freqdiv) $(size)
 		$(vecho) "Support boot_v1.1 and +"
     endif
 	$(Q) mv eagle.app.flash.bin firmware/upgrade/$(BIN_NAME).bin
@@ -269,8 +270,8 @@ flashonefile: all
 	$(OBJCOPY) --only-section .data -O binary $(TARGET_OUT) eagle.app.v6.data.bin
 	$(OBJCOPY) --only-section .rodata -O binary $(TARGET_OUT) eagle.app.v6.rodata.bin
 	$(OBJCOPY) --only-section .irom0.text -O binary $(TARGET_OUT) eagle.app.v6.irom0text.bin
-	$(SDK_TOOLS)/gen_appbin_old.exe $(TARGET_OUT) v6
-	$(SDK_TOOLS)/gen_flashbin.exe eagle.app.v6.flash.bin eagle.app.v6.irom0text.bin 0x40000
+	$(SDK_TOOLS)/gen_appbin.py $(TARGET_OUT) v6
+	$(SDK_TOOLS)/gen_flashbin.py eagle.app.v6.flash.bin eagle.app.v6.irom0text.bin 
 	rm -f eagle.app.v6.data.bin
 	rm -f eagle.app.v6.flash.bin
 	rm -f eagle.app.v6.irom0text.bin
@@ -281,7 +282,7 @@ flashonefile: all
 	$(vecho) "No boot needed."
 	$(vecho) "Generate eagle.app.flash.bin successully in folder firmware."
 	$(vecho) "eagle.app.flash.bin-------->0x00000"
-	$(ESPTOOL) -p $(ESPPORT) -b 256000 write_flash 0x00000 firmware/eagle.app.flash.bin
+	$(ESPTOOL) -p $(ESPPORT) -b 256000 write_flash 0x00000 firmware/eagle.flash.bin
 
 flashboot: all flashinit
 ifeq ($(boot), new)

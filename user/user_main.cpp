@@ -1,4 +1,4 @@
-//#define UIDEMO
+#define UIDEMO
 
 
 #include "Adafruit_ILI9341_fast_as.h"
@@ -69,11 +69,12 @@ ICACHE_FLASH_ATTR static void updateScreen(void)
 	cube_draw(previous, 0);
 	cube_draw(current, 0XFFFF);
     memcpy(previous, current, sizeof (previous));
-}
+}	ets_uart_printf("\r\nUpdata Screen\r\n");
 #endif
 
 ICACHE_FLASH_ATTR void sendMsgToHandler(void *arg)
 {
+	ets_uart_printf("\r\nMSG\r\n");
 	system_os_post(USER_TASK_PRIO_0, UPDATE_SCREEN, 'a');
 }
 
@@ -85,6 +86,18 @@ ICACHE_FLASH_ATTR void handler_task (os_event_t *e)
 		default: break;
 	}
 }
+
+extern "C" ICACHE_FLASH_ATTR int main() {
+ets_uart_printf("\r\nMain....\r\n");
+/*
+for (int i=0; i<1000; i++) { 
+ets_uart_printf("\r\nKrok %i\r\n",i);
+updateScreen();};
+*/
+//user_init();
+ets_uart_printf("\r\nI po main....\r\n");
+
+return 0;};
 
 extern "C" ICACHE_FLASH_ATTR void user_init(void)
 {
@@ -98,8 +111,9 @@ extern "C" ICACHE_FLASH_ATTR void user_init(void)
 	// Initialize TFT
 	tft.begin();
 
-	tft.fillScreen(0);
+	tft.fillScreen(128);
 #ifdef UIDEMO
+	ets_uart_printf("\r\nUIDemo\r\n");
 	setupUI();
 	target_room_temperature = min_target_temp;
 #endif
@@ -114,4 +128,7 @@ extern "C" ICACHE_FLASH_ATTR void user_init(void)
 	system_os_task(handler_task, USER_TASK_PRIO_0, handlerQueue, TEST_QUEUE_LEN);
 
 	ets_uart_printf("System init done \r\n");
+	main();
 }
+
+
